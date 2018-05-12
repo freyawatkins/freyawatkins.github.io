@@ -1,0 +1,11 @@
+name: mywebpage
+author: Freya Watkins
+output_dir: docs
+output:
+  html_document:
+    theme: flatly
+    lib_dir: site_libs
+    self_contained: no
+navbar:
+  title: FW website
+
