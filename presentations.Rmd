@@ -1,3 +1,5 @@
+
+
 #conference talks
 
 * Thompson, R.L & Watkins, F. (2018). The Role of Visual Angle on L2 Learning in British Sign Language. Leverhulme Network on Sign Language as Second Languages Project – 4th meeting, Humboldt Universität zu Berlin, Germany, 19th March 2018.
@@ -18,7 +20,9 @@
 
 * Watkins, F. & Thompson, R. L. (2012). Investigating Handedness Effects on Perception in British Sign Language. 51. Studentische Tagung Sprachwissenschaft (StuTS), Universitaet Stuttgart, 17th May 2012.
 
+
 #poster presentations
+
 
 * Watkins, F., Abdlkarim, D. & Thompson, R. L. (2017). Viewpoint specificity in L1 and L2 British Sign Language comprehension. Architectures and Mechanisms of Language Processing 2017, University of Lancaster, 9th September 2017.
 
