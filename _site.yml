@@ -7,5 +7,18 @@ output:
     lib_dir: site_libs
     self_contained: no
 navbar:
-  title: Freya Watkins    [Bio](bio.html)
+  title: Freya Watkins
+  right:
+    - text: "home"
+      href: index.html
+    - text: "bio"
+      href: bio.html
+    - text: "publications"
+      href: publications.html
+    - text: "presentations"
+      href: presentations.html
+    - text: "outreach"
+      href: outreach.html
+    - text: "other work"
+      href: otherwork.html
 

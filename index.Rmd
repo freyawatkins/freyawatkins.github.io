@@ -1,18 +1,10 @@
 ---
-title: "Hi!"
+title: "hi!"
 ---
 
 I'm a PhD student at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx)'s [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
 
 I am supervised by [Dr Robin Thompson](https://www.birmingham.ac.uk/schools/psychology/people/profile.aspx?ReferenceId=71086) in the [Multimodal Multilingual Language Processing Lab](https://m2l2lab.com).
 
-My postgraduate study is funded by 1+3 studentship from the [ESRC (Economic and Social Research Council)](https://esrc.ukri.org/).  
-
-#Publications
-
-#Presentations
-
-#Other projects
-
-#CV
+My postgraduate study is funded by 1+3 studentship from the [Economic and Social Research Council](https://esrc.ukri.org/).  
 
