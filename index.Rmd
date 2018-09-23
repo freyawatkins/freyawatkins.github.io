@@ -1,8 +1,6 @@
 ---
-title: "hi!"
+title: "Hello!"
 ---
-
-new test*
 
 I'm a PhD student at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx)'s [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
 
