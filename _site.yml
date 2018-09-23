@@ -1,6 +1,5 @@
 name: freyawatkins.github.io
 author: Freya Watkins
-output_dir: docs
 output:
   html_document:
     theme: flatly
