@@ -1,14 +1,28 @@
 name: freyawatkins.github.io
 author: Freya Watkins
+output_dir: '.'
 output_dir: "."
 output:
   html_document:
     theme: flatly
     lib_dir: site_libs
+    self_contained: no
     self_contained: yes
 navbar:
   title: Freya Watkins
   right:
+  - text: home
+    href: index.html
+  - text: bio
+    href: bio.html
+  - text: publications
+    href: publications.html
+  - text: presentations
+    href: presentations.html
+  - text: outreach
+    href: outreach.html
+  - text: other work
+    href: otherwork.html
     - text: "home"
       href: index.html
     - text: "bio"
