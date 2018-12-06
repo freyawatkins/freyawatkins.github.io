@@ -5,11 +5,7 @@ title: "Hello!"
 I'm a [PhD student](https://www.birmingham.ac.uk/schools/psychology/people/dr-students/watkins-freya.aspx) at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx)'s [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
 
 I am supervised by [Dr Robin Thompson](https://www.birmingham.ac.uk/schools/psychology/people/profile.aspx?ReferenceId=71086) in the [Multimodal Multilingual Language Processing Lab](https://m2l2lab.com)<br/>
-<<<<<<< HEAD
-& [Dr Bodo Winter](https://bodowinter.com) in the [Department of English Language and Linguistics](https://www.birmingham.ac.uk/schools/edacs/departments/englishlanguage/index.aspx).
-=======
 & [Dr Bodo Winter](https://www.bodowinter.com) in the [Department of English Language and Linguistics](https://www.birmingham.ac.uk/schools/edacs/departments/englishlanguage/index.aspx).
->>>>>>> ae37901ddc11b1f1a8ade77575ecd8ab303f98c0
 
 My postgraduate study is funded by a 1+3 studentship from the [Economic and Social Research Council](https://esrc.ukri.org/).  
 
