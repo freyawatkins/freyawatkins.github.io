@@ -1,0 +1,590 @@
+---
+title: "Angle Processing analysis"
+author: "Bodo Winter, Freya Watkins"
+date: "2019-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mixed model analysis:
+
+Load packages:
+```{r setup_load_packages}
+setwd("~/R/Viewpoint")
+library(tidyverse)
+library(car)
+library(lme4)
+library(afex)
+library(directlabels)
+```
+
+Read in the file, convert to tibble:
+```{r read_in_file}
+vp <- read.delim("2019-04-26 Viewpoint.txt")
+vp <- as_tibble(vp)
+head(vp)
+```
+
+# Overview for methods section:
+
+Check number of subjects and how many data points per subjects:
+```{r check_subs}
+length(unique(vp$Subject))
+summary(vp$Subject)
+```
+
+Number of subjects per group; and then by L1 vs L2:
+```{r check_groups}
+table(vp$Group) / 490
+```
+
+What's the breakdown in terms of sign type?
+```{r sign_types}
+vpnoprac <- filter(vp, PrimeTarget != 'practice')
+table(vpnoprac$SignType) / 90
+```
+
+What's the breakdown in terms of noun class?
+```{r noun_classes}
+table(vpnoprac$NounClass) / 90
+```
+Coded for noun class (body-anchored as well as other categories, following Pfau & Steinbach, 2005 - haven't found anything for BSL yet)
+
+Check signs by degree of change: 
+```{r sign_by_degree_change}
+table(vp$Sign, vp$AngleChange)
+```
+Most items are balanced for degree of change. Some items are imbalanced due to the accidental inclusion of pairs with a 135 degree rotation (i.e. 90-45 on opposite sides) Other imbalances are due to different experiment versions not being perfectly counterbalanced across participants
+
+Check sign by difficulty condition:
+```{r sign_by_condition}
+table(vp$Sign, vp$Difficulty)
+```
+Some items appear only in easier, only in harder, some appear in both. Only some appear in opposite, but all appear in same. This is due to the design aiming to balance for 'degree of change between prime/target' rather than 'Difficulty'.
+
+Now we'll log-transform the RT variable for later analysis: 
+```{r log_transform_RT}
+vp <- mutate(vp, Log10RT = log10(RT))
+```
+The column "Priming" shows RT2-RT1; "LogDiff" shows LogRT2-LogRT1; "PercentFaster" shows how much faster RT2 was than RT1 as a percentage.
+
+Number of unique signs:
+```{r check_signs}
+length(unique(vp$Sign))
+```
+
+Check number of data points per sign:
+```{r check_signs_numbers}
+table(vp$Sign)
+```
+
+Which signs don't have 90 data points per subject?
+
+```{r lower_item_nums}
+which(table(vp$Sign) != 90)
+```
+These are the 10 practice trials.
+
+# Exclusions:
+
+1. Discard practice trials
+```{r no_practice}
+vp <- filter(vp,
+             PrimeTarget != 'practice')
+```
+
+2. Exclude items with low accuracy (below 70% overall)
+Calculate accuracy per item:
+```{r show_item_acc}
+item_acc <- vp %>% group_by(Sign) %>% 
+     summarize(ACC = mean(ACC))
+print(item_acc)
+```
+13 items had below 70% accuracy (5.4% of 240 items)
+Exclude those items from further analysis:
+```{r no_low_acc_items}
+vp <- filter(vp,
+             ExclItem != 1)
+```
+Not sure about leaving this in or not? Perhaps a lower threshold than 70%? Some items have really low average acc e.g. 12%...
+
+3. Exclude very fast (<500ms) or very slow (>10000ms) trials
+```{r no_fast_slow_items}
+vp <- filter(vp,
+             ExclSlowFast != 1)
+```
+10 trials out of 22,050 (0.05%) were excluded from further analysis.
+
+# Creating tibbles
+For the prime accuracy analysis, we should reduce the vp tibble to prime trials only:
+```{r acc_prime_tibble}
+vpAccPrimes <- filter(vp, PrimeTarget == 'prime')
+summary(vpAccPrimes$PrimeTarget)
+```
+The prime accuracy analysis will be conducted on 10,800 trials.
+
+For the prime RT analysis, we'll additionally exclude incorrect responses: 
+```{r RT_prime_tibble}
+vpRTPrimes <- filter(vpAccPrimes, ExclIncorrect != 1)
+summary(vpRTPrimes$PrimeTarget)
+```
+The prime RT analysis will be conducted on 9685 trials
+
+For the Accuracy difference analysis, we'll exclude prime-target pairs that do not neatly fit into the three difficulty categories. Firstly those pairs with a 135 degree rotation (e.g. 90L-45R; 54 pairs total = 0.53% of data); as well as pairs with a 'opposite' rotation (e.g. 45L-45R; 1383 pairs total = 13.54% of data) 
+```{r acc_target_tibble}
+vpAccTargets <- filter(vp, Excl135Deg != 1) %>% filter(ExclOpposite !=1) %>%  
+                    filter(PrimeTarget == 'target')
+summary(vpAccTargets$PrimeTarget)
+```
+The accuracy difference analysis will be conducted on 9362 prime-target pairs
+
+For the RT difference analysis, we'll additionally exclude incorrect target trials (and their pairs), as well as the pairs of the 10 slow/fast trials. This is because we cannot calculate difference scores when one trial of a prime-target pair has been excluded, meaning its pair must be excluded too.
+```{r RT_target_tibble}
+vpRTTargets <- filter(vpAccTargets, ExclIncorrect != 1) %>% 
+                  filter(ExclPairIncorr != 1) %>% filter(ExclPairSlow != 1)
+summary(vpRTTargets$PrimeTarget)
+```
+The accuracy difference analysis will be conducted on 7987 prime-target pairs
+
+## Descriptive statistics:
+
+Averages per Group, Sign Type, Noun Class and Priming condition for accuracy:
+
+```{r overall_averages}
+vp %>% group_by(Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccPrimes %>% group_by(Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccTargets %>% group_by(Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccPrimes %>% group_by(SignType) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccTargets %>% group_by(SignType) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccPrimes %>% group_by(NounClass) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccTargets %>% group_by(NounClass) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vp %>% group_by(PrimeTarget) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccPrimes %>% group_by(AngleLR) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccTargets %>% group_by(Difficulty) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+```
+- Fluent signers clearly make fewer errors than intermediate M2L2 signers
+- Prime/target breakdown: group differences more pronounced for prime trials; M2-L2 groups improve 2-3% for Targets. 
+- 2HA signs least accurately comprehended. Biggest improvement at target for 2HS signs
+- Midsagittal signs have fewer errors than body-anchored or lateral signs at Prime. Body-anchored signs still have high error rates at target
+- Overall, slightly higher accuracy for target vs prime (learning effect?)
+- A clear progression from 0 degree angle having the fewest errors (~6%), to 45 degree angles (~9%), to 90 degree angles having the most errors (~15%) for Prime trials
+- For target trials, similar error rates across Difficulty conditions. 
+
+Averages per Group, Sign Type, Noun Class and Priming condition for RT:
+```{r overall_averages_RT}
+vpRTPrimes %>% group_by(Group) %>% 
+  summarize(RT = mean(RT))
+vpRTTargets %>% group_by(Group) %>% 
+  summarize(RT = mean(RT))
+vpRTPrimes %>% group_by(SignType) %>% 
+  summarize(RT = mean(RT))
+vpRTTargets %>% group_by(SignType) %>% 
+  summarize(RT = mean(RT))
+vpRTPrimes %>% group_by(NounClass) %>% 
+  summarize(RT = mean(RT))
+vpRTTargets %>% group_by(NounClass) %>% 
+  summarize(RT = mean(RT))
+vp %>% filter(ExclIncorrect != 1) %>% group_by(PrimeTarget) %>% 
+  summarize(RT = mean(RT))
+vpRTPrimes %>% group_by(AngleLR) %>% 
+  summarize(RT = mean(RT))
+vpRTTargets %>% group_by(Difficulty) %>% 
+  summarize(RT = mean(RT))
+vpRTTargets %>% group_by(Difficulty) %>% 
+  summarize(Priming = mean(Priming))
+vpRTTargets %>% group_by(Difficulty) %>% 
+  summarize(PercentFaster = mean(PercentFaster))
+```
+- L2 intermediate signers about 480ms slower than L1 Deaf signers to Primes
+- Gap between these groups closes to 365ms at target
+- One-handed signs fastest, 2ha signs lag behind 2hs signs, same at Prime & Target
+- No clear effect of noun class on RTs at prime or target
+- Definite overall priming difference with targets around 150ms faster.
+- 0 angle clearly fastest and both 90 angles slowest, but 45L much faster than 45R! (RH closest here?)
+- Not obvious effect of difficulty condition on target RT alone
+- But looking at Priming (RT2-RT1), obviously more priming in easier (229ms) & same conditions (194ms) than harder condition (71ms)
+- Also clear from proportional transformation (% faster) 15% faster for easier, 14% for same, just 6% faster in harder condition.
+
+Is there something going on between Sign Type and Angle?
+```{r signtype_by_angle}
+vpAccPrimes %>% group_by(SignType, AngleLR) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpRTPrimes %>% group_by(SignType, AngleLR) %>% 
+  summarize(RT = mean(RT))
+```
+Less variation in error rates by angle to 1h signs. Error rate is lowest to 2hs at 0 and 45L. However when one hand may begin to occlude the other, particularly the right hand, error rate increases (i.e. at 90R for 2hs and 2ha). Interestingly 45L much better than 45R for 2hs signs.
+For RT, again there is less variation cause by angle for 1H signs. 2ha signs are surprisingly slow at 0 - here 45L is the fastest. Clearest angle effect on 2hs signs - they start fastest of all at 0 but see huge slowdowns as angle increases likely due to occlusion.  45L faster than 45R in 1h and 2ha. 90R much slower than 90L for 2hs signs, i.e when the entire dominant right-hand is occluded.
+
+What about between Noun Class and Angle?
+```{r nounclass _by_angle}
+vpAccPrimes %>% group_by(NounClass, AngleLR) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpRTPrimes %>% group_by(NounClass, AngleLR) %>% 
+  summarize(RT = mean(RT))
+```
+Patterns for noun class are less clear. Largest variation in error rates for body-anchored signs and in RT for midsagittal signs. Some surprisng results - e.g. more errors and slower RTs for lateral signs at 90L where they should be clearest, than at 90R where they should be occluded.
+
+## Plots
+
+Accuracy plots:
+```{r accuracy_plots}
+vpAccPrimes %>% group_by(AngleLR, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = ErrorRate, group = Group, colour = Group)) +
+  coord_cartesian(ylim = c(0,0.20)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = Group), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 18) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes by Angle & Group') + xlab('Angle')
+vpAccPrimes %>% group_by(AngleLR, SignType) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = ErrorRate, group = SignType, colour = SignType)) +
+  coord_cartesian(ylim = c(0,0.20)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = SignType), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 18) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes by Angle & Sign Type') + xlab('Angle')
+vpAccPrimes %>% group_by(AngleLR, NounClass) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = ErrorRate, group = NounClass, colour = NounClass)) +
+  coord_cartesian(ylim = c(0,0.20)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = NounClass), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 18) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes by Angle & Noun Class')+ xlab('Angle')
+vp %>% group_by(AngleLR, PrimeTarget) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = ErrorRate, group = PrimeTarget, colour = PrimeTarget)) +
+  coord_cartesian(ylim = c(0,0.15)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = PrimeTarget), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes vs Targets by Angle') + xlab('Angle')
+vpAccTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% group_by(Difficulty, Group) %>% 
+  summarize(AccChange = mean(AccChange)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
+                         y = AccChange, group = Group, colour = Group)) +
+  coord_cartesian(ylim = c(-0.06,0.06)) +
+  geom_dl(aes(x = Difficulty, y = AccChange, label = Group), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 18) +
+  theme(legend.position = "none") +
+  ggtitle('Change in Accuracy at Target by Difficulty & Group') + xlab('Difficulty')
+```
+
+Plot RTs the same way:
+```{r RT_plots}
+vpRTPrimes %>% group_by(AngleLR, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = RT, group = Group, 
+                         colour = Group)) +
+  coord_cartesian(ylim = c(1500,2300)) +
+  geom_dl(aes(x = AngleLR, y = RT, label = Group), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('RT to Primes by Angle & Group') + xlab('Angle')
+vpRTPrimes %>% group_by(AngleLR, SignType) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = RT, group = SignType, 
+                         colour = SignType)) +
+  coord_cartesian(ylim = c(1500,2300)) +
+  geom_dl(aes(x = AngleLR, y = RT, label = SignType), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('RT to Primes by Angle & Sign Type') + xlab('Angle')
+vpRTPrimes %>% group_by(AngleLR, NounClass) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = RT, group = NounClass, 
+                         colour = NounClass)) +
+  coord_cartesian(ylim = c(1500,2300)) +
+  geom_dl(aes(x = AngleLR, y = RT, label = NounClass), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('RT to Primes by Angle & Noun Class') + xlab('Angle')
+vp %>% filter(ExclIncorrect != 1) %>% 
+ group_by(AngleLR, PrimeTarget) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = RT, group = PrimeTarget, 
+                         colour = PrimeTarget)) +
+  coord_cartesian(ylim = c(1500,2300)) +
+  geom_dl(aes(x = AngleLR, y = RT, label = PrimeTarget), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('RT to Primes vs. Targets by Angle') + xlab('Angle')
+vpRTTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% group_by(Difficulty, Group) %>% 
+  summarize(Priming = mean(Priming)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
+                         y = Priming, group = Group, colour = Group)) +
+  coord_cartesian(ylim = c(0,300)) +
+    geom_dl(aes(x = Difficulty, y = Priming, label = Group), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('Priming at Target by Difficulty & Group') + xlab('Difficulty')
+
+```
+
+Accuracy averages broken up by group with facet wraps:
+```{r accuracy_group}
+vpAccPrimes %>% group_by(AngleLR, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
+             y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(0, 0.20)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('Error Rate to Primes by Angle') + xlab('Angle')
+vpAccPrimes %>% group_by(SignType, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = SignType, y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 0.15)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('ErrorRate to Primes by Sign Type')
+vpAccPrimes %>% group_by(NounClass  , Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = NounClass, y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 0.15)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('ErrorRate to Primes by Noun Class & Group')
+vp %>% group_by(PrimeTarget, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = PrimeTarget, y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 0.15)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('ErrorRate by Prime vs. Target & Group')
+vpAccTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% 
+  group_by(Difficulty, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+    ggplot(aes(factor(Difficulty, level = c("easier", "same", "harder")),
+               y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 0.15)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('Error Rate to Targets by Difficulty') + xlab('Difficulty')
+vpAccTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% 
+  group_by(Difficulty, Group) %>% 
+  summarize(AccChange = mean(AccChange)) %>% 
+    ggplot(aes(x = factor(Difficulty, level = c("easier", "same", "harder")),
+               y = AccChange, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(-.06, .06)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('Change in Accuracy by Difficulty') + xlab('Difficulty')
+```
+
+RT averages broken up by group with facet wraps:
+```{r RT_group}
+vpRTPrimes %>% group_by(AngleLR, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
+             y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2300)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('RT to Primes by Angle') + xlab('Angle')
+vpRTPrimes %>% group_by(SignType, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = SignType, y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2300)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('RT to Primes by Sign Type')
+vpRTPrimes %>% group_by(NounClass, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = NounClass, y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2300)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('RT to Primes by Noun Class')
+vp %>% filter(ExclIncorrect != 1) %>% group_by(PrimeTarget, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = PrimeTarget, y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2300)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('RT by Prime vs. Target')
+vpRTTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% 
+  group_by(Difficulty, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+    ggplot(aes(factor(Difficulty, level = c("easier", "same", "harder")), 
+               y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2100)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('RT to Targets by Difficulty') + xlab('Difficulty')
+vpRTTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% 
+  group_by(Difficulty, Group) %>% 
+  summarize(Priming = mean(Priming)) %>% 
+    ggplot(aes(x = factor(Difficulty, level = c("easier", "same", "harder")),
+               y = Priming, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 300)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('Priming at Targets by Difficulty & Group') + xlab('Difficulty')
+```
+
+# By-subject plots
+Create by-subject plots:
+```{r subject_plots}
+vpAccPrimes %>% group_by(AngleLR, Group, Subject) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
+             y = ErrorRate, group=Subject, colour = Group)) +
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                y = ErrorRate, group=Subject, colour = Group)) +
+  theme_minimal(base_size = 16) +
+  ggtitle('ErrorRate by Angle to Primes') + xlab('Angle')
+vpRTPrimes %>% group_by(AngleLR, Group, Subject) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
+                        y = RT, group=Subject, colour = Group)) +
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                y = RT, group=Subject, colour = Group)) +
+  theme_minimal(base_size = 16) +
+  ggtitle('RT by Angle to Primes') + xlab('Angle')
+vpAccTargets %>% group_by(Difficulty, Group, Subject) %>% 
+  summarize(AccChange = mean(AccChange)) %>% 
+  ggplot(aes(x = factor(Difficulty, level = c("easier", "same", "harder")),
+             y = AccChange, group=Subject, colour = Group)) +
+  coord_cartesian(ylim = c(-0.2, 0.2)) +
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
+                y = AccChange, group=Subject, colour = Group)) +
+  theme_minimal(base_size = 18) +
+  ggtitle('Change in Accuracy by Angle (Acc1-Acc2)') + xlab('Difficulty')
+vpRTTargets %>% group_by(Difficulty, Group, Subject) %>% 
+  summarize(Priming = mean(Priming)) %>% 
+  ggplot(aes(x = factor(Difficulty, level = c("easier", "same", "harder")),
+             y = Priming, group=Subject, colour = Group)) +
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
+                y = Priming, group=Subject, colour = Group)) +
+  theme_minimal(base_size = 18) + 
+  ggtitle('Priming by Angle (RT1-RT2') + xlab('Difficulty')
+```
+These are maybe too busy to use, but could be worth producing these by-subject graphs side-by-side for each group.
+
+Leaving out the item-level analysis code for now (which will be more relevant to the other paper) - let's move on to the LMMs.
+
+## Mixed Model Analysis, 1st half of experiment
+
+First attempt at the mixed model for the Error analysis on Primes only (i.e. 1st half of the experiment)
+```{r PrimeErrors_model}
+PrimeErrors <- mixed(ErrorRate ~ Angle*Group  + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpAccPrimes, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(PrimeErrors)
+```
+Seems to converge... However I'm not sure if the random slope syntax is right (or for the following models). All participants see every sign once, but signs allowed to vary by angle (Angle). So diff ppts will see see same sign from diff angle. However, not all signs appear from every angle as items imbalanced.
+I've removed Yes/No response as a predictor from the error model - it's certainly motivated in the RT model, as Yes responses are faster but no big difference in error rate (yes 7.2% vs. no 8.4%) 
+Correlation of random effects probably too strong to be reliable - suggests something wrong with model? But if true, participants who have higher intercepts have steeper angle slopes. Makes sense that only the participants who found the task difficult at 0deg show a stronger interference effect of angle. (see Fig 81, p.271)
+
+Now a first attempt at the mixed model for the RT analysis on Primes only (i.e. first half of the experiment)
+```{r PrimeRT_model, message=FALSE}
+PrimeRT <- mixed(Log10RT ~ Angle*Group + CorrResp + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpRTPrimes, all_fit = TRUE, method = "LRT", 
+             control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(PrimeRT)
+```
+This also seems to converge? But having trouble interpreting the results due to LogRTs.
+
+And now I'll try checking the assumptions of these models:
+
+## Checking assumptions
+The below doesn't seem to be working - even though the models are now converging. Is the normality assumption checked differently for a mixed effect model? Think I got confused with sum-coding the fixed effects... but I did previously manage to to replicate the example in your book for a simple linear model based on my data.
+
+{r check_assumptions}
+Group <- rep(c('L1_Deaf','L1_Hearing','L2_Fluent','L2_Intermediate'), each = 3)
+Angle <- c(0, 45, 90, 0, 45, 90, 0, 45, 90, 0, 45, 90)
+Angle <- as.factor(Angle)
+sum <- mutate(vpAccPrimes,
+              Group_sum = factor(Group),
+              Angle_sum = factor(Angle))
+sum
+contrasts(sum$Group_sum) <- contr.sum(4)
+contrasts(sum$Angle_sum) <- contr.sum(3)
+
+sum_mdl <- mixed(ACC ~ Angle_sum*Group_sum + CorrResp + (1 + Angle|Subject) +
+               (1 + Angle|Sign), sum, method = "LRT", 
+             control = lmerControl(optCtrl = list(maxfun = 1e6)))
+
+res <- residuals(sum_mdl)
+res
+
+# Assess the normality assumption:
+par(mfrow = c(1, 3))
+
+# Plot 1, histogram:
+hist(res) # distribution of residuals looks fairly normal
+# Plot 2, Q-Q plot:
+qqnorm(res)
+qqline(res) # also indicates a good fit with normal distrib
+
+# Plot 3, residual plot:
+plot(fitted(sum_mdl), res) # all 12 cells have a fairly similar distribution
+# possibly getting a bit larger for L2_Intermediate group further along y-axis
+
+# check variance inflation factor:
+vif(sum_mdl) # all btwn range of 1.0 - 1.05
+
+## Mixed Model Analysis, 2nd half of experiment
+Now we'll run LMMs on the data from the second half of the experiment. First modelling Change in Accuracy between Prime & Target as a function of Difficulty and Group.
+` ``{r ChangeAcc_model}
+ChangeAcc <- mixed(AccChange ~ Difficulty*Group + 
+                     (1 + Difficulty|Subject) + (1 + Difficulty|Sign), 
+                   vpAccTargets, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(ChangeAcc)
+` ``
+This gives the error: "Error in anova.merMod(full_model, fits[[c]]) : 
+  all models must be fit to the same data object" so no output displayed.
+
+Now modelling Priming (diff between RT1 & RT2) as a function of Difficulty & Group. For now, this is not based on log-transformed RTs, because I can't yet work out how to match up log-transformed prime-target pairs in R to calculate the difference
+```{r Priming_model}
+RTPriming <- mixed(LogDiff ~ Difficulty*Group + CorrResp + 
+                     (1 + Difficulty|Subject) + (1 + Difficulty|Sign), 
+                   vpRTTargets, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(RTPriming)
+```
+This one does converge with all_fit
