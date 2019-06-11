@@ -1,7 +1,7 @@
 ---
-title: "Angle Processing analysis"
-author: "Bodo Winter, Freya Watkins"
-date: "2019-03-10"
+title: "BSL Angle Processing analysis"
+author: "Freya Watkins & Bodo Winter"
+date: "2019-06-03"
 output: html_document
 ---
 
@@ -19,13 +19,15 @@ library(car)
 library(lme4)
 library(afex)
 library(directlabels)
+library(emmeans)
 ```
 
 Read in the file, convert to tibble:
 ```{r read_in_file}
-vp <- read.delim("2019-04-26 Viewpoint.txt")
+vp <- read.delim("2019-06-04 Viewpoint.txt")
 vp <- as_tibble(vp)
 head(vp)
+vp$Angle <- as.factor(vp$Angle)
 ```
 
 # Overview for methods section:
@@ -112,7 +114,7 @@ vp <- filter(vp,
 Not sure about leaving this in or not? Perhaps a lower threshold than 70%? Some items have really low average acc e.g. 12%...
 
 3. Exclude very fast (<500ms) or very slow (>10000ms) trials
-```{r no_fast_slow_items}
+```{r no_fast_slow_trials}
 vp <- filter(vp,
              ExclSlowFast != 1)
 ```
@@ -137,6 +139,8 @@ For the Accuracy difference analysis, we'll exclude prime-target pairs that do n
 ```{r acc_target_tibble}
 vpAccTargets <- filter(vp, Excl135Deg != 1) %>% filter(ExclOpposite !=1) %>%  
                     filter(PrimeTarget == 'target')
+vpAccTargets$Difficulty <- factor(vpAccTargets$Difficulty)
+vpAccTargets$AngleChange <- factor(vpAccTargets$AngleChange)
 summary(vpAccTargets$PrimeTarget)
 ```
 The accuracy difference analysis will be conducted on 9362 prime-target pairs
@@ -145,6 +149,8 @@ For the RT difference analysis, we'll additionally exclude incorrect target tria
 ```{r RT_target_tibble}
 vpRTTargets <- filter(vpAccTargets, ExclIncorrect != 1) %>% 
                   filter(ExclPairIncorr != 1) %>% filter(ExclPairSlow != 1)
+vpRTTargets$Difficulty <- factor(vpRTTargets$Difficulty)
+vpRTTargets$AngleChange <- factor(vpRTTargets$AngleChange)
 summary(vpRTTargets$PrimeTarget)
 ```
 The accuracy difference analysis will be conducted on 7987 prime-target pairs
@@ -168,11 +174,13 @@ vpAccPrimes %>% group_by(NounClass) %>%
   summarize(ErrorRate = mean(ErrorRate))
 vpAccTargets %>% group_by(NounClass) %>% 
   summarize(ErrorRate = mean(ErrorRate))
-vp %>% group_by(PrimeTarget) %>% 
+vp %>% group_by(PrimeTarget, AngleLR) %>% 
   summarize(ErrorRate = mean(ErrorRate))
 vpAccPrimes %>% group_by(AngleLR) %>% 
   summarize(ErrorRate = mean(ErrorRate))
 vpAccTargets %>% group_by(Difficulty) %>% 
+  summarize(ErrorRate = mean(ErrorRate))
+vpAccPrimes %>% group_by(Subject) %>% 
   summarize(ErrorRate = mean(ErrorRate))
 ```
 - Fluent signers clearly make fewer errors than intermediate M2L2 signers
@@ -185,11 +193,11 @@ vpAccTargets %>% group_by(Difficulty) %>%
 
 Averages per Group, Sign Type, Noun Class and Priming condition for RT:
 ```{r overall_averages_RT}
-vpRTPrimes %>% group_by(Group) %>% 
+vpRTPrimes %>% group_by(Group, AngleLR) %>% 
   summarize(RT = mean(RT))
 vpRTTargets %>% group_by(Group) %>% 
   summarize(RT = mean(RT))
-vpRTPrimes %>% group_by(SignType) %>% 
+vpRTPrimes %>% group_by(SignType,AngleLR) %>% 
   summarize(RT = mean(RT))
 vpRTTargets %>% group_by(SignType) %>% 
   summarize(RT = mean(RT))
@@ -203,7 +211,7 @@ vpRTPrimes %>% group_by(AngleLR) %>%
   summarize(RT = mean(RT))
 vpRTTargets %>% group_by(Difficulty) %>% 
   summarize(RT = mean(RT))
-vpRTTargets %>% group_by(Difficulty) %>% 
+vpRTTargets %>% group_by(Difficulty, Group) %>% 
   summarize(Priming = mean(Priming))
 vpRTTargets %>% group_by(Difficulty) %>% 
   summarize(PercentFaster = mean(PercentFaster))
@@ -251,48 +259,86 @@ vpAccPrimes %>% group_by(AngleLR, Group) %>%
   theme_minimal(base_size = 18) +
   theme(legend.position = "none") +
   ggtitle('ErrorRate to Primes by Angle & Group') + xlab('Angle')
+vpAccPrimes %>% group_by(AngleLR, L1L2) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+                         y = ErrorRate, group = L1L2, colour = L1L2)) +
+  coord_cartesian(ylim = c(0,0.20)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = L1L2), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 18) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes by Angle & Group') + xlab('Angle')
 vpAccPrimes %>% group_by(AngleLR, SignType) %>% 
   summarize(ErrorRate = mean(ErrorRate)) %>% 
   ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
                          y = ErrorRate, group = SignType, colour = SignType)) +
-  coord_cartesian(ylim = c(0,0.20)) +
+  coord_cartesian(ylim = c(0,0.15)) +
   geom_dl(aes(x = AngleLR, y = ErrorRate, label = SignType), 
           method = list(dl.combine("last.points"), cex = 0.8)) + 
-  theme_minimal(base_size = 18) +
+  theme_minimal(base_size = 16) +
   theme(legend.position = "none") +
   ggtitle('ErrorRate to Primes by Angle & Sign Type') + xlab('Angle')
+vpAccPrimes %>% filter(IconCat != 'na') %>% group_by(AngleLR, IconCat) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), y = ErrorRate, group = IconCat, colour = IconCat)) +
+  coord_cartesian(ylim = c(0,0.15)) +
+  geom_dl(aes(x = AngleLR, y = ErrorRate, label = IconCat), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('ErrorRate to Primes by Angle & Iconicity Category') + xlab('Iconicity Category')
+vpAccPrimes %>% filter(IconRating != 0) %>% group_by(AngleLR, IconRating) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% ggplot +
+  geom_point(aes(x=IconRating, y=ErrorRate, color=AngleLR, shape=AngleLR)) +
+  geom_smooth(aes(x=IconRating, y=ErrorRate, color=AngleLR, shape=AngleLR), method=lm,se=FALSE) +coord_cartesian(ylim = c(0,0.20)) +
+  ggtitle('ErrorRate by Angle & Iconicity Rating')
 vpAccPrimes %>% group_by(AngleLR, NounClass) %>% 
   summarize(ErrorRate = mean(ErrorRate)) %>% 
-  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
-                         y = ErrorRate, group = NounClass, colour = NounClass)) +
+  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), y = ErrorRate, group = NounClass, colour = NounClass)) +
   coord_cartesian(ylim = c(0,0.20)) +
   geom_dl(aes(x = AngleLR, y = ErrorRate, label = NounClass), 
           method = list(dl.combine("last.points"), cex = 0.8)) + 
   theme_minimal(base_size = 18) +
   theme(legend.position = "none") +
   ggtitle('ErrorRate to Primes by Angle & Noun Class')+ xlab('Angle')
-vp %>% group_by(AngleLR, PrimeTarget) %>% 
-  summarize(ErrorRate = mean(ErrorRate)) %>% 
-  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
-                         y = ErrorRate, group = PrimeTarget, colour = PrimeTarget)) +
-  coord_cartesian(ylim = c(0,0.15)) +
-  geom_dl(aes(x = AngleLR, y = ErrorRate, label = PrimeTarget), 
-          method = list(dl.combine("last.points"), cex = 0.8)) + 
-  theme_minimal(base_size = 16) +
-  theme(legend.position = "none") +
-  ggtitle('ErrorRate to Primes vs Targets by Angle') + xlab('Angle')
 vpAccTargets %>% filter(Difficulty != 'exclude',
               Difficulty != 'opposite') %>% group_by(Difficulty, Group) %>% 
   summarize(AccChange = mean(AccChange)) %>% 
-  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
-                         y = AccChange, group = Group, colour = Group)) +
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = AccChange, group = Group, colour = Group)) +
   coord_cartesian(ylim = c(-0.06,0.06)) +
   geom_dl(aes(x = Difficulty, y = AccChange, label = Group), 
           method = list(dl.combine("last.points"), cex = 0.8)) + 
-  theme_minimal(base_size = 18) +
-  theme(legend.position = "none") +
+  theme_minimal(base_size = 16) + theme(legend.position = "none") +
   ggtitle('Change in Accuracy at Target by Difficulty & Group') + xlab('Difficulty')
+vpAccTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% group_by(Difficulty, SignType) %>% 
+  summarize(AccChange = mean(AccChange)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = AccChange, group = SignType, colour = SignType)) +
+  coord_cartesian(ylim = c(-0.06,0.06)) +
+  geom_dl(aes(x = Difficulty, y = AccChange, label = SignType), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) + theme(legend.position = "none") +
+  ggtitle('Change in Accuracy at Target by Difficulty & Sign Type') + xlab('Difficulty')
+vpAccTargets %>% filter(Difficulty != 'exclude', Difficulty != 'opposite', IconCat != 'na') %>% group_by(Difficulty, IconCat) %>% 
+  summarize(AccChange = mean(AccChange)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = AccChange, group = IconCat, colour = IconCat)) +
+  coord_cartesian(ylim = c(-0.06,0.06)) +
+  geom_dl(aes(x = Difficulty, y = AccChange, label = IconCat), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) + theme(legend.position = "none") +
+  ggtitle('Change in Accuracy at Target by Difficulty & Iconicity Category') + xlab('Difficulty')
+vpAccTargets %>% filter(IconRating != 0, Difficulty != 'exclude', Difficulty != 'opposite') %>% group_by(Difficulty, IconRating) %>% summarize(AccChange = mean(AccChange)) %>% ggplot + geom_point(aes(x=IconRating, y=AccChange, color=Difficulty, shape=Difficulty)) + geom_smooth(aes(x=IconRating, y=AccChange, color=Difficulty, shape=Difficulty), method=lm,se=FALSE) +coord_cartesian(ylim = c(-0.06,0.06)) +
+  ggtitle('Change in Accuracy at Target by Difficulty & Iconicity Rating')
+vpAccTargets %>% filter(Difficulty != 'exclude', Difficulty != 'opposite') %>% group_by(Difficulty, NounClass) %>% summarize(AccChange = mean(AccChange)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = AccChange, group = NounClass, colour = NounClass)) +
+  coord_cartesian(ylim = c(-0.06,0.06)) +
+  geom_dl(aes(x = Difficulty, y = AccChange, label = NounClass), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) + theme(legend.position = "none") +
+  ggtitle('Change in Accuracy at Target by Difficulty & Noun Class') + xlab('Difficulty')
 ```
+Could only get IconRatings plot code to work as a scatter plot. Not sure if IconRating should be coded as ordered? Interesting that errors increase with iconicity for 90L (and slightly for 45L) whereas other angles show decrease in errors as iconicity increases. But not sure of the how strong these trends are... 
 
 Plot RTs the same way:
 ```{r RT_plots}
@@ -318,6 +364,22 @@ vpRTPrimes %>% group_by(AngleLR, SignType) %>%
   theme_minimal(base_size = 16) +
   theme(legend.position = "none") +
   ggtitle('RT to Primes by Angle & Sign Type') + xlab('Angle')
+vpRTPrimes %>% filter(IconCat != 'na') %>% group_by(AngleLR, IconCat) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot + geom_line(aes(x = factor(AngleLR, level = 
+                                      c("90L", "45L", "0", "45R", "90R")), 
+                         y = RT, group = IconCat, colour = IconCat)) +
+  coord_cartesian(ylim = c(1500,2300)) +
+  geom_dl(aes(x = AngleLR, y = RT, label = IconCat), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('RT to Primes by Angle & Iconicity') + xlab('Iconicity Category')
+vpRTPrimes %>% filter(IconRating != 0) %>%  group_by(AngleLR, IconRating) %>% 
+  summarize(RT = mean(RT)) %>% ggplot +
+  geom_point(aes(x=IconRating, y=RT, color=AngleLR, shape=AngleLR)) +
+  geom_smooth(aes(x=IconRating, y=RT, color=AngleLR, shape=AngleLR), method=lm,se=FALSE) + coord_cartesian(ylim = c(1700,2100)) +
+  ggtitle('RT to Primes by Angle & Iconicity Rating')
 vpRTPrimes %>% group_by(AngleLR, NounClass) %>% 
   summarize(RT = mean(RT)) %>% 
   ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
@@ -329,18 +391,17 @@ vpRTPrimes %>% group_by(AngleLR, NounClass) %>%
   theme_minimal(base_size = 16) +
   theme(legend.position = "none") +
   ggtitle('RT to Primes by Angle & Noun Class') + xlab('Angle')
-vp %>% filter(ExclIncorrect != 1) %>% 
- group_by(AngleLR, PrimeTarget) %>% 
-  summarize(RT = mean(RT)) %>% 
-  ggplot + geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")), 
+vp %>% filter(ExclIncorrect != 1) %>% group_by(AngleLR, PrimeTarget) %>% 
+  summarize(RT = mean(RT)) %>% ggplot + 
+  geom_line(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
                          y = RT, group = PrimeTarget, 
                          colour = PrimeTarget)) +
-  coord_cartesian(ylim = c(1500,2300)) +
+  coord_cartesian(ylim = c(1700,2100)) +
   geom_dl(aes(x = AngleLR, y = RT, label = PrimeTarget), 
           method = list(dl.combine("last.points"), cex = 0.8)) + 
-  theme_minimal(base_size = 16) +
+  theme_minimal(base_size = 18) +
   theme(legend.position = "none") +
-  ggtitle('RT to Primes vs. Targets by Angle') + xlab('Angle')
+  ggtitle('RT to Primes/Targets by Angle') + xlab('Angle')
 vpRTTargets %>% filter(Difficulty != 'exclude',
               Difficulty != 'opposite') %>% group_by(Difficulty, Group) %>% 
   summarize(Priming = mean(Priming)) %>% 
@@ -352,8 +413,41 @@ vpRTTargets %>% filter(Difficulty != 'exclude',
   theme_minimal(base_size = 16) +
   theme(legend.position = "none") +
   ggtitle('Priming at Target by Difficulty & Group') + xlab('Difficulty')
+vpRTTargets %>% filter(Difficulty != 'exclude',
+              Difficulty != 'opposite') %>% group_by(Difficulty, SignType) %>% 
+  summarize(Priming = mean(Priming)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), 
+                         y = Priming, group = SignType, colour = SignType)) +
+  coord_cartesian(ylim = c(0,300)) +
+    geom_dl(aes(x = Difficulty, y = Priming, label = SignType), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('Priming at Target by Difficulty & SignType') + xlab('Difficulty')
+vpRTTargets %>% filter(Difficulty != 'exclude', Difficulty != 'opposite', IconCat != 'na') %>%
+  group_by(Difficulty, IconCat) %>% summarize(Priming = mean(Priming)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = Priming, group = IconCat, colour = IconCat)) +
+  coord_cartesian(ylim = c(0,300)) +
+    geom_dl(aes(x = Difficulty, y = Priming, label = IconCat), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('Priming at Target by Difficulty & Iconicity Category') + xlab('Difficulty')
+vpRTTargets %>% filter(IconRating != 0, Difficulty != 'exclude', Difficulty != 'opposite') %>%  group_by(Difficulty, IconRating) %>% summarize(Priming = mean(Priming)) %>% ggplot + geom_point(aes(x=IconRating, y=Priming, color=Difficulty, shape=Difficulty)) +
+  geom_smooth(aes(x=IconRating, y=Priming, color=Difficulty, shape=Difficulty), method=lm,se=FALSE) + coord_cartesian(ylim = c(0,300)) +
+  ggtitle('Priming at Target by Difficulty & Iconicity Rating')
+vpRTTargets %>% filter(Difficulty != 'exclude', Difficulty != 'opposite') %>%
+  group_by(Difficulty, NounClass) %>% summarize(Priming = mean(Priming)) %>% 
+  ggplot + geom_line(aes(x = factor(Difficulty, level = c("easier", "same", "harder")), y = Priming, group = NounClass, colour = NounClass)) +
+  coord_cartesian(ylim = c(0,300)) +
+    geom_dl(aes(x = Difficulty, y = Priming, label = NounClass), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "none") +
+  ggtitle('Priming at Target by Difficulty & Noun Class') + xlab('Difficulty')
 
 ```
+Seems to be less going on with iconicity here, but interesting again that RT increase with iconicity for 45L only... Also not sure why low iconicity = more priming in Easier & Harder conditions only..?
 
 Accuracy averages broken up by group with facet wraps:
 ```{r accuracy_group}
@@ -372,6 +466,14 @@ vpAccPrimes %>% group_by(SignType, Group) %>%
   coord_cartesian(ylim = c(0, 0.15)) +
   theme_minimal(base_size = 22) +
   ggtitle('ErrorRate to Primes by Sign Type')
+vpAccPrimes %>% filter(IconCat != 'na') %>% group_by(IconCat, Group) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = factor(IconCat, level = c("low", "mid", "high")), 
+             y = ErrorRate, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  coord_cartesian(ylim = c(0, 0.15)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('ErrorRate to Primes by Iconicity')+ xlab('Iconicity')
 vpAccPrimes %>% group_by(NounClass  , Group) %>% 
   summarize(ErrorRate = mean(ErrorRate)) %>% 
   ggplot(aes(x = NounClass, y = ErrorRate, fill = Group)) +
@@ -379,13 +481,6 @@ vpAccPrimes %>% group_by(NounClass  , Group) %>%
   coord_cartesian(ylim = c(0, 0.15)) +
   theme_minimal(base_size = 18) +
   ggtitle('ErrorRate to Primes by Noun Class & Group')
-vp %>% group_by(PrimeTarget, Group) %>% 
-  summarize(ErrorRate = mean(ErrorRate)) %>% 
-  ggplot(aes(x = PrimeTarget, y = ErrorRate, fill = Group)) +
-  geom_bar(stat = 'identity', position = position_dodge()) + 
-  coord_cartesian(ylim = c(0, 0.15)) +
-  theme_minimal(base_size = 22) +
-  ggtitle('ErrorRate by Prime vs. Target & Group')
 vpAccTargets %>% filter(Difficulty != 'exclude',
               Difficulty != 'opposite') %>% 
   group_by(Difficulty, Group) %>% 
@@ -425,6 +520,14 @@ vpRTPrimes %>% group_by(SignType, Group) %>%
   coord_cartesian(ylim = c(1500, 2300)) +
   theme_minimal(base_size = 22) +
   ggtitle('RT to Primes by Sign Type')
+vpRTPrimes %>% filter(IconCat != 'na') %>% group_by(IconCat, Group) %>% 
+  summarize(RT = mean(RT)) %>% 
+  ggplot(aes(x = factor(IconCat, level = c("low", "mid", "high")), 
+                        y = RT, fill = Group)) +
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  coord_cartesian(ylim = c(1500, 2300)) +
+  theme_minimal(base_size = 22) +
+  ggtitle('RT to Primes by Iconicity')+ xlab('Iconicity')
 vpRTPrimes %>% group_by(NounClass, Group) %>% 
   summarize(RT = mean(RT)) %>% 
   ggplot(aes(x = NounClass, y = RT, fill = Group)) +
@@ -432,13 +535,6 @@ vpRTPrimes %>% group_by(NounClass, Group) %>%
   coord_cartesian(ylim = c(1500, 2300)) +
   theme_minimal(base_size = 18) +
   ggtitle('RT to Primes by Noun Class')
-vp %>% filter(ExclIncorrect != 1) %>% group_by(PrimeTarget, Group) %>% 
-  summarize(RT = mean(RT)) %>% 
-  ggplot(aes(x = PrimeTarget, y = RT, fill = Group)) +
-  geom_bar(stat = 'identity', position = position_dodge()) +
-  coord_cartesian(ylim = c(1500, 2300)) +
-  theme_minimal(base_size = 22) +
-  ggtitle('RT by Prime vs. Target')
 vpRTTargets %>% filter(Difficulty != 'exclude',
               Difficulty != 'opposite') %>% 
   group_by(Difficulty, Group) %>% 
@@ -473,6 +569,15 @@ vpAccPrimes %>% group_by(AngleLR, Group, Subject) %>%
                 y = ErrorRate, group=Subject, colour = Group)) +
   theme_minimal(base_size = 16) +
   ggtitle('ErrorRate by Angle to Primes') + xlab('Angle')
+vpAccPrimes %>% group_by(Angle, Group, Subject) %>% 
+  summarize(ErrorRate = mean(ErrorRate)) %>% 
+  ggplot(aes(x = Angle, y = ErrorRate, group=Subject, colour = Group)) +
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = Angle, y = ErrorRate, group=Subject, colour = Group)) + geom_dl(aes(x = Angle, y = ErrorRate, label = Subject), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  coord_cartesian(xlim = c(0, 100)) +
+  theme_minimal(base_size = 16) +
+  ggtitle('ErrorRate by Angle to Primes') + xlab('Angle')
 vpRTPrimes %>% group_by(AngleLR, Group, Subject) %>% 
   summarize(RT = mean(RT)) %>% 
   ggplot(aes(x = factor(AngleLR, level = c("90L", "45L", "0", "45R", "90R")),
@@ -482,6 +587,11 @@ vpRTPrimes %>% group_by(AngleLR, Group, Subject) %>%
                 y = RT, group=Subject, colour = Group)) +
   theme_minimal(base_size = 16) +
   ggtitle('RT by Angle to Primes') + xlab('Angle')
+vpRTPrimes %>% group_by(Angle, Group, Subject) %>% 
+  summarize(RT = mean(RT)) %>% ggplot(aes(x = Angle, y = RT, group=Subject, colour = Group)) + geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(x = Angle, y = RT, group=Subject, colour = Group)) + geom_dl(aes(x = Angle, y = RT, label = Subject), 
+          method = list(dl.combine("last.points"), cex = 0.8)) + 
+  coord_cartesian(xlim = c(0, 100)) + theme_minimal(base_size = 16) + ggtitle('RT by Angle to Primes') + xlab('Angle')
 vpAccTargets %>% group_by(Difficulty, Group, Subject) %>% 
   summarize(AccChange = mean(AccChange)) %>% 
   ggplot(aes(x = factor(Difficulty, level = c("easier", "same", "harder")),
@@ -507,17 +617,24 @@ These are maybe too busy to use, but could be worth producing these by-subject g
 Leaving out the item-level analysis code for now (which will be more relevant to the other paper) - let's move on to the LMMs.
 
 ## Mixed Model Analysis, 1st half of experiment
-
 First attempt at the mixed model for the Error analysis on Primes only (i.e. 1st half of the experiment)
 ```{r PrimeErrors_model}
 PrimeErrors <- mixed(ErrorRate ~ Angle*Group  + (1 + Angle|Subject) +
                (1 + Angle|Sign), vpAccPrimes, all_fit = TRUE, method = "LRT", 
                control = lmerControl(optCtrl = list(maxfun = 1e6)))
 print(PrimeErrors)
+summary(PrimeErrors)
 ```
 Seems to converge... However I'm not sure if the random slope syntax is right (or for the following models). All participants see every sign once, but signs allowed to vary by angle (Angle). So diff ppts will see see same sign from diff angle. However, not all signs appear from every angle as items imbalanced.
-I've removed Yes/No response as a predictor from the error model - it's certainly motivated in the RT model, as Yes responses are faster but no big difference in error rate (yes 7.2% vs. no 8.4%) 
 Correlation of random effects probably too strong to be reliable - suggests something wrong with model? But if true, participants who have higher intercepts have steeper angle slopes. Makes sense that only the participants who found the task difficult at 0deg show a stronger interference effect of angle. (see Fig 81, p.271)
+
+Multiple comparisons for the PrimeErrors model:
+```{r primeAcc_model_pairwise}
+PrimeAccPairwise = emmeans(PrimeErrors, specs = trt.vs.ctrl ~ Angle:Group, data = vpAccPrimes)
+PrimeAccPairwise
+```
+Had to recode Angle as a factor in order to get it to work for multiple comparisons in emmeans
+I specified '0,L1_Deaf' as the control (not sure if this is a good way to do it)
 
 Now a first attempt at the mixed model for the RT analysis on Primes only (i.e. first half of the experiment)
 ```{r PrimeRT_model, message=FALSE}
@@ -525,8 +642,15 @@ PrimeRT <- mixed(Log10RT ~ Angle*Group + CorrResp + (1 + Angle|Subject) +
                (1 + Angle|Sign), vpRTPrimes, all_fit = TRUE, method = "LRT", 
              control = lmerControl(optCtrl = list(maxfun = 1e6)))
 print(PrimeRT)
+summary(PrimeRT)
 ```
 This also seems to converge? But having trouble interpreting the results due to LogRTs.
+
+Multiple comparisons for the PrimeRT model:
+```{r primeRT_model_pairwise}
+PrimeRTPairwise = emmeans(PrimeRT, specs = trt.vs.ctrl ~ Angle:Group, data = vpRTPrimes)
+PrimeRTPairwise
+```
 
 And now I'll try checking the assumptions of these models:
 
@@ -569,22 +693,269 @@ vif(sum_mdl) # all btwn range of 1.0 - 1.05
 
 ## Mixed Model Analysis, 2nd half of experiment
 Now we'll run LMMs on the data from the second half of the experiment. First modelling Change in Accuracy between Prime & Target as a function of Difficulty and Group.
-` ``{r ChangeAcc_model}
-ChangeAcc <- mixed(AccChange ~ Difficulty*Group + 
-                     (1 + Difficulty|Subject) + (1 + Difficulty|Sign), 
+```{r ChangeAcc_model}
+ChangeAcc <- mixed(AccChange ~ Difficulty*Group + (1 + Difficulty|Subject), 
                    vpAccTargets, all_fit = TRUE, method = "LRT", 
                control = lmerControl(optCtrl = list(maxfun = 1e6)))
 print(ChangeAcc)
-` ``
-This gives the error: "Error in anova.merMod(full_model, fits[[c]]) : 
-  all models must be fit to the same data object" so no output displayed.
+summary(ChangeAcc)
+```
+```{r accchange_model_pairwise}
+AccChangePairwise = emmeans(ChangeAcc, specs = trt.vs.ctrl ~ Difficulty:Group, ref = 3, data = vpAccTargets)
+AccChangePairwise
+```
 
-Now modelling Priming (diff between RT1 & RT2) as a function of Difficulty & Group. For now, this is not based on log-transformed RTs, because I can't yet work out how to match up log-transformed prime-target pairs in R to calculate the difference
+Now modelling Priming (diff between logRT1 & logRT2) as a function of Difficulty & Group:
 ```{r Priming_model}
 RTPriming <- mixed(LogDiff ~ Difficulty*Group + CorrResp + 
-                     (1 + Difficulty|Subject) + (1 + Difficulty|Sign), 
+                     (1 + Difficulty|Subject), 
                    vpRTTargets, all_fit = TRUE, method = "LRT", 
                control = lmerControl(optCtrl = list(maxfun = 1e6)))
 print(RTPriming)
+summary(RTPriming)
 ```
-This one does converge with all_fit
+```{r priming_model_pairwise}
+PrimingPairwise = emmeans(RTPriming, specs = trt.vs.ctrl ~ Difficulty:Group, ref = 3, data = vpRTTargets)
+PrimingPairwise
+```
+
+## Sub-analyses
+
+# Sign Type Mixed Models
+```{r SignTypeErrors_model}
+SignTypeErrors <- mixed(ErrorRate ~ Angle*SignType + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpAccPrimes, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(SignTypeErrors)
+summary(SignTypeErrors)
+```
+```{r Sign_type_errors_pairwise}
+vpAccPrimes$Angle <- as.factor(vpAccPrimes$Angle)
+STEPairwise = emmeans(SignTypeErrors, pairwise ~ Angle:SignType, data = vpAccPrimes)
+STEPairwise
+```
+
+
+```{r sign_type_RT}
+SignTypeRT <- mixed(Log10RT ~ Angle*SignType + CorrResp + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpRTPrimes, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(SignTypeRT)
+summary(SignTypeRT)
+```
+
+```{r Sign_type_RT_pairwise}
+STRTPairwise = emmeans(SignTypeRT, pairwise ~ Angle:SignType, data = vpRTPrimes)
+STRTPairwise
+```
+
+```{r sign_type_AccChange}
+SignTypeAC <- mixed(AccChange ~ Difficulty*SignType + (1 + Difficulty|Subject), 
+                    vpAccTargets, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(SignTypeAC)
+summary(SignTypeAC)
+```
+
+```{r Sign_type_AC_pairwise}
+STACPairwise = emmeans(SignTypeAC, pairwise ~ Difficulty:SignType, data = vpAccTargets)
+STACPairwise
+```
+
+```{r sign_type_Priming}
+SignTypePriming <- mixed(LogDiff ~ Difficulty*SignType + CorrResp + (1 + Difficulty|Subject), 
+                    vpRTTargets, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(SignTypePriming)
+summary(SignTypePriming)
+```
+
+```{r Sign_type_Priming_pairwise}
+STPPairwise = emmeans(SignTypePriming, pairwise ~ Difficulty:SignType, data = vpRTTargets)
+STPPairwise
+```
+
+# Iconicity Mixed Models
+```{r Iconicity_errors_model}
+vpIconAccPrimes <- filter(vpAccPrimes, IconRating != 0)
+IconicityErrors <- mixed(ErrorRate ~ Angle*IconRating + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpIconAccPrimes, all_fit = TRUE, method =
+                 "LRT", control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(IconicityErrors)
+summary(IconicityErrors)
+```
+
+```{r Iconicity_RT_model}
+vpIconRTPrimes <- filter(vpRTPrimes, IconRating != 0)
+IconicityRT <- mixed(Log10RT ~ Angle*IconRating + CorrResp + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpIconRTPrimes, all_fit = TRUE, method =
+                 "LRT", control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(IconicityRT)
+summary(IconicityRT)
+```
+
+`` `{r Iconicity_AC_model}
+vpIconAccChange <- filter(vpAccTargets, IconRating != 0)
+IconicityAC <- mixed(AccChange ~ Difficulty*IconRating + (1 + Difficulty|Subject), 
+                     vpIconAccChange, all_fit = TRUE, method = "LRT", 
+                     control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(IconicityAC)
+summary(IconicityAC)
+` ``
+can't get this one to work: Error in anova.merMod(full_model, fits[[c]]) : 
+  all models must be fit to the same data object
+
+```{r Iconicity_priming_model}
+vpIconPriming <- filter(vpRTTargets, IconRating != 0)
+IconicityPriming <- mixed(LogDiff ~ Difficulty*IconRating + CorrResp +(1 + Difficulty|Subject), 
+                          vpIconPriming, all_fit = TRUE, method =
+                 "LRT", control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(IconicityPriming)
+summary(IconicityPriming)
+```
+
+# Noun Class Mixed Models
+` ``{r NounClass_errors_model}
+NCErrors <- mixed(ErrorRate ~ Angle*NounClass + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpAccPrimes, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(NCErrors)
+summary(NCErrors)
+` ``
+
+` ``{r NounClass_RT_model}
+NCRT <- mixed(Log10RT ~ Angle*NounClass + CorrResp + (1 + Angle|Subject) +
+               (1 + Angle|Sign), vpRTPrimes, all_fit = TRUE, method = "LRT", 
+               control = lmerControl(optCtrl = list(maxfun = 1e6)))
+print(NCRT)
+summary(NCRT)
+` ``
+
+## Mental Rotation Analysis 
+
+Read in Mental Rotation data file, convert to tibble:
+```{r read_in_mr_file}
+mr <- read.delim("2019-06-03 mental rotation data.txt")
+mr <- as_tibble(mr)
+head(mr)
+```
+Check number of subjects and how many data points per subjects:
+```{r check_trials}
+length(unique(mr$Subject))
+summary(mr$Subject)
+```
+7 subjects have <48 data points (S108, S110, S125, S126, S142, S143, S144) due to technical problems (experiment file crashing).
+
+Exclude very fast (<500ms) or very slow (>10000ms) trials:
+```{r no_slow_trials}
+mr <- filter(mr, ExclSlow != 1)
+```
+
+Summarise the mean Accuracy & RT by Subject for the mental rotation task:
+```{r mr_subject_averages}
+mrAcc <- mr %>% group_by(Group, Subject) %>% 
+  summarize(MR_ACC = mean(ACC))
+print(mrAcc)
+
+mrRT <- filter(mr, ACC == 1)
+mrRT <- mrRT %>% group_by(Group, Subject) %>% 
+  summarize(MR_RT = mean(RT))
+print(mrRT)
+```
+There are around 13/45 subjects with accuracy between 40-60% suggesting they may have been guessing/didn't fully understand the task. I excluded these the first time I did this analysis but have left them in for now.
+Haven't log transformed RTs here - not sure if should?
+
+Summarise the mean Accuracy & RT by Subject for the BSL experiment (prime data only): 
+```{r bsl_subject_averages}
+BSLAcc <- vpAccPrimes %>% group_by(Group, Subject) %>% 
+  summarize(BSL_ACC = mean(ACC))
+print(BSLAcc)
+BSLRT <- vpRTPrimes %>% group_by(Group, Subject) %>% 
+  summarize(BSL_RT = mean(RT)) 
+print(BSLRT)
+```
+Bind tibbles:
+```{r bind_tibbles}
+AccCorr<- bind_cols(mrAcc, BSLAcc)
+print(AccCorr)
+RTCorr <- bind_cols(mrRT, BSLRT)
+print(RTCorr)
+```
+This has duplicated the Group & Subject columns, I thought it would recognise they're the same and skip them? Oh well :)
+
+```{r scatterplots}
+ggplot(AccCorr, aes(x=MR_ACC, y=BSL_ACC, color=Group, shape=Group)) +
+  geom_point() + 
+  geom_smooth(method=lm,se=FALSE) +
+  ggtitle('Mental Rotation Task Accuracy vs BSL Angle Task Accuracy')
+ggplot(RTCorr, aes(x=MR_RT, y=BSL_RT, color=Group, shape=Group)) +
+  geom_point() + 
+  geom_smooth(method=lm,se=FALSE) +
+  ggtitle('Mental Rotation Task RT vs BSL Angle Task RT')
+```
+  
+Compute correlations between BSL task & Mental Rotation task for Accuracy & RT:
+```{r correlations}
+AccCorr %>% group_by(Group) %>%
+  summarize(AccCOR=cor(MR_ACC,BSL_ACC))
+RTCorr %>% group_by(Group) %>%
+  summarize(RTCOR=cor(MR_RT,BSL_RT))
+```
+Not sure if this is the right way to calculate the correlations! Again these values seem quite high but maybe because R not Rsquared.
+
+I've only looked at overall averages. In theory it would be possible to correlate by type of rotation e.g. 45deg sign vs 50deg shape rotation, 90deg sign vs 100deg shape rotation but I don't think there are enough items (only a very short test).
+I wonder if it is worth reducing the data to just the conditions requiring rotation (ie. 45 & 90 for BSL; 50, 100, 150 for MR). We don't expect rotation to 0-degree signs, and there is no rotation required for two identical shapes.. So this correlation as is also has lots of non-rotation in the mix
+
+In terms of interpreting the results, I would say that the RT correlation is of far more value than the Accuracy one, since the 3 fluent groups are performing at ceiling accuracy on the BSL task.
+
+BSL task data per subject, 45 & 90 angles only:
+```{r BSL_no0}
+BSLAccNo0 <- filter(vpAccPrimes, Angle != "0")
+BSLAccNo0 <- BSLAccNo0 %>% group_by(Group, Subject) %>% 
+  summarize(BSL_ACC = mean(ACC))
+print(BSLAccNo0)
+BSLRTNo0 <- filter(vpRTPrimes, Angle != "0", ACC != 0)
+BSLRTNo0 <- BSLRTNo0 %>% group_by(Group, Subject) %>% 
+  summarize(BSL_RT = mean(RT))
+print(BSLRTNo0)
+```
+
+MR task data per subject, 50, 100 & 150 rotations only:
+```{r MR_no0}
+mrAccNo0 <- filter(mr, Rotation != "0")
+mrAccNo0 <- mrAccNo0 %>% group_by(Group, Subject) %>% 
+  summarize(MR_ACC = mean(ACC))
+print(mrAccNo0)
+mrRTNo0 <- filter(mr, Rotation != "0", ACC == 1)
+mrRTNo0 <- mrRTNo0 %>% group_by(Group, Subject) %>% 
+  summarize(MR_RT = mean(RT))
+print(mrRTNo0)
+```
+
+Combine tibbles for no 0 data:
+```{r combine_no0_tibbles}
+AccCorrNo0 <- bind_cols(mrAccNo0, BSLAccNo0)
+print(AccCorrNo0)
+RTCorrNo0 <- bind_cols(mrRTNo0, BSLRTNo0)
+print(RTCorrNo0)
+```
+
+Create scatter plots for no 0 data:
+```{r no0_scatterplots}
+ggplot(AccCorrNo0, aes(x=MR_ACC, y=BSL_ACC, color=Group, shape=Group)) +
+  geom_point() + 
+  geom_smooth(method=lm,se=FALSE) +
+  ggtitle('Mental Rotation Task Accuracy (no 0) vs BSL Angle Task Accuracy (no 0)')
+ggplot(RTCorrNo0, aes(x=MR_RT, y=BSL_RT, color=Group, shape=Group)) +
+  geom_point() + 
+  geom_smooth(method=lm,se=FALSE) +
+  ggtitle('Mental Rotation Task RT (no 0) vs BSL Angle Task RT (no 0)')
+```
+
+Compute no0 correlations between BSL & Mental Rotation tasks:
+```{r no0_correlations}
+AccCorrNo0 %>% group_by(Group) %>%
+  summarize(AccCORno0=cor(MR_ACC,BSL_ACC))
+RTCorrNo0 %>% group_by(Group) %>%
+  summarize(RTCORno0=cor(MR_RT,BSL_RT))
+```
