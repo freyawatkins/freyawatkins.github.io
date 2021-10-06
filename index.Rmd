@@ -1,5 +1,8 @@
 ---
 title: "Hello!"
+output:
+  html_document:
+    fig_caption: FALSE
 ---
 
 I'm a [PhD student](https://www.birmingham.ac.uk/schools/psychology/people/dr-students/watkins-freya.aspx) in psycholinguistics at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx), based in the [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
@@ -9,3 +12,7 @@ I am supervised by [Dr Robin Thompson](https://www.birmingham.ac.uk/schools/psyc
 
 My postgraduate study is funded by a 1+3 studentship from the [Economic and Social Research Council](https://esrc.ukri.org/).  
 
+!["Freya sitting on yellowing grass in a park in the summer. She is wearing a yellow skirt, black tank top and has sunglasses on her head. She is looking at and talking to someone out of shot."](images/fw-hanna-bday1-crop.jpg)
+
+
+This website was created in RStudio and GitHub following a [psyTeachR](https://psyteachr.github.io/index.html) [tutorial](https://debruine.github.io/tutorials/webpages.html) created by [Lisa DeBruine](https://debruine.github.io/).
