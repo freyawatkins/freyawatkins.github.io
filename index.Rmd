@@ -3,6 +3,7 @@ title: "Hello!"
 output:
   html_document:
     fig_caption: FALSE
+    theme: cosmo
 ---
 
 I'm a [PhD student](https://www.birmingham.ac.uk/schools/psychology/people/dr-students/watkins-freya.aspx) in psycholinguistics at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx), based in the [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
