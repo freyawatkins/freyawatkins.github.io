@@ -3,7 +3,7 @@ author: Freya Watkins
 output_dir: "."
 output:
   html_document:
-    theme: haddock
+    theme: cosmo
     lib_dir: site_libs
     self_contained: no
 navbar:
