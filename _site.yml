@@ -3,7 +3,7 @@ author: Freya Watkins
 output_dir: "."
 output:
   html_document:
-    theme: flatly
+    theme: haddock
     lib_dir: site_libs
     self_contained: no
 navbar:
@@ -13,12 +13,18 @@ navbar:
     href: index.html
   - text: "bio"
     href: bio.html
+  - text: "PhD"
+    href: phd.html
   - text: "publications"
     href: publications.html
   - text: "presentations"
     href: presentations.html
   - text: "outreach"
     href: outreach.html
+  - text: "teaching"
+    href: teaching.html
+  - text: "RA work"
+    href: RA-work.html
   - text: "other work"
     href: otherwork.html
 
