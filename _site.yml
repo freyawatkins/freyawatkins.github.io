@@ -13,8 +13,6 @@ navbar:
     href: index.html
   - text: "bio"
     href: bio.html
-  - text: "PhD"
-    href: phd.html
   - text: "publications"
     href: publications.html
   - text: "presentations"
