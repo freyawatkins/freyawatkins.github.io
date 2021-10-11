@@ -1,5 +1,5 @@
 ---
-title: "Hello! 👋"
+title: "Hello!"
 output:
   html_document:
     fig_caption: FALSE

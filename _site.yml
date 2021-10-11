@@ -1,5 +1,5 @@
 name: freyawatkins.github.io
-author: Freya Watkins
+author: "Freya Watkins"
 output_dir: "."
 output:
   html_document:
@@ -7,7 +7,7 @@ output:
     lib_dir: site_libs
     self_contained: no
 navbar:
-  title: "Freya Watkins""
+  title: "Freya Watkins"
   right:
   - text: "home"
     href: index.html
@@ -25,4 +25,3 @@ navbar:
     href: RA-work.html
   - text: "other work"
     href: otherwork.html
-
