@@ -16,4 +16,4 @@ My postgraduate study is funded by a 1+3 studentship from the [Economic and Soci
 !["Headshot of Freya looking into the camera. She has wavy brown shoulder-length hair, a black top and sunglasses on her head"](images/fw.jpg)
 
 
-This website was created in RStudio and GitHub following a [psyTeachR](https://psyteachr.github.io/index.html) [tutorial](https://debruine.github.io/tutorials/webpages.html) created by [Lisa DeBruine](https://debruine.github.io/).
+This website was created in RStudio and GitHub following a [psyTeachR](https://psyteachr.github.io/index.html) [tutorial](https://debruine.github.io/tutorials/webpages.html) created by [Lisa DeBruine](https://debruine.github.io/). 
