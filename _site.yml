@@ -1,6 +1,6 @@
 name: freyawatkins.github.io
 author: "Freya Watkins"
-output_dir: "."
+output_dir: "docs"
 output:
   html_document:
     theme: cosmo
