@@ -2,9 +2,11 @@
 title: "other work"
 ---
 
+* I offer tutoring in getting started with using R, including data wrangling and visualisation with {tidyverse}, as well as how to use version control in Git/GitHub to keep track of projects. Get in touch (see below) if you are interested!
+
 * Since 2013 I have worked as a self-employed German-English translator and proofreader. I have experience translating a range of texts, varying from academic studies to technical datasheets to children's fiction. I proofread academic essays written in English, particularly those written by German native speakers.
 
 * I also have 10 years' experience working as an audio transcriber. I have worked for [Take Note Typing](https://www.takenotetyping.com/), [Amara (Universal Subtitles)](https://amara.org/en/) and a range of individual clients including academics and businesses.
 
-* If you need any transcription, translation or proofreading work done, feel free to contact me! <br/>
+* If you need any tutoring, transcription, DE>EN translation or proofreading work done, feel free to contact me! <br/>
 My email is: f [dot] watkins [at] pgr [dot] bham [dot] ac [dot] uk
