@@ -1,3 +1,3 @@
 # Academic website
 
-Repository for [freyawatkins.github.io](freyawatkins.github.io) personal website
+Repository for [freyawatkins.github.io](https://freyawatkins.github.io) personal website
