@@ -1,0 +1,67 @@
+---
+title: "Code examples"
+author: "Freya Watkins"
+format: revealjs
+editor: visual
+---
+
+## Open data, materials, code
+
+![](images/paste-8F243313.png){width="596" fig-align="center"}![](images/paste-F76E84E3.png){width="346" fig-align="center"}
+
+![](images/paste-D22BFC6A.png){width="520"} ![](images/paste-10BD79C1.png){width="520"} [open access paper 1](https://www.sciencedirect.com/science/article/pii/S0010027717300902?via%3Dihub); [data](https://ars.els-cdn.com/content/image/1-s2.0-S0010027717300902-mmc1.txt); [code](https://ars.els-cdn.com/content/image/1-s2.0-S0010027717300902-mmc2.r)
+
+[open access paper 2](https://www.frontiersin.org/articles/10.3389/fpsyg.2022.932370); [data](https://osf.io/6dsjp); [code](https://osf.io/kjctg/); [materials](https://osf.io/vgztn)
+
+## Dataviz in R - behavioural data
+
+![](images/paste-959058D3.png){fig-align="center"}
+
+## {ggplot2} raincloud plots
+
+![](images/paste-BF37C744.png){fig-align="center"}
+
+## Dataviz in R - behavioural data (2)
+
+![](images/paste-2B249F3D.png) ![](images/ALARM%2090L%20gif.gif){width="200"}![](images/ALARM_45L%20gif.gif){width="200"}![](images/ALARM_0%20gif.gif){width="200"}![](images/ALARM%2045R%20gif.gif){width="200"}![](images/ALARM%2090R%20gif.gif){width="200"}
+
+## Online Research: PsychoPy/PsychoJS
+
+![](images/paste-E1A5144A.png){width="300"} ![](images/paste-388CF918.png){width="725"}
+
+![](images/paste-6A927C8D.png){width="800"}
+
+## Block rotation experiment
+
+![](images/paste-59797BE7.png) open materials: [gitlab.pavlovia.org/freyawatkins/block_rotation](gitlab.pavlovia.org/freyawatkins/block_rotation)
+
+![](images/sameExample.gif){width="250"} ![](images/mirrorsExample.gif){width="250"} ![](images/same-2.gif){width="250"} ![](images/mirror-2.gif){width="250"}
+
+## Block rotation experiment (2)
+
+![](images/paste-ABC3EBF2.png){fig-align="center"}
+
+## Self-taught data dashboard
+
+-   Interactive map using R Shiny / LeafletJS
+
+![](images/paste-0051425B.png){fig-align="center"}
+
+## Self-taught dataviz - TidyTuesday
+
+![](images/taylor_bigrams.png){fig-align="center"}
+
+## Commissioned dataviz work
+
+-   visualising results of a community centre members' survey
+-   cleaning up someone else's messy survey design, text data
+
+![](images/index.png){width="576"} ![](images/paste-DDB34A0E.png){width="427"}
+
+## Other coding projects/work
+
+-   [my personal website](https://freyawatkins.github.io) using R-Markdown/GitHub repo/HTML
+-   teaching: R-Ladies invited [talk](https://www.youtube.com/watch?v=RD_ZR4Ulzec) on version control ([slides](https://freyawatkins.github.io/r-ladies-cov_github))
+-   1 on 1 tutoring: dataviz in R and version control with PhD students/academics
+-   nominated to curate for [`@WeAreRLadies`](https://twitter.com/WeAreRLadies) in the autumn
+-   for these presentation slides I tried out Quarto/RevealJS
