@@ -26,13 +26,14 @@ editor: visual
 ![](images/paste-2B249F3D.png) ![](images/ALARM%2090L%20gif.gif){width="200"}![](images/ALARM_45L%20gif.gif){width="200"}![](images/ALARM_0%20gif.gif){width="200"}![](images/ALARM%2045R%20gif.gif){width="200"}![](images/ALARM%2090R%20gif.gif){width="200"}
 
 ## Online research: PsychoPy/PsychoJS
+
 ![](images/paste-E1A5144A.png){width="250"} ![](images/paste-388CF918.png){width="675"}
 
-![](images/paste-6A927C8D.png){fig-align="center"}
+![](images/paste-6A927C8D.png){fig-align="center" width="800"}
 
 ## Block rotation experiment
 
-![](images/paste-59797BE7.png) open materials: [gitlab.pavlovia.org/freyawatkins/block_rotation](gitlab.pavlovia.org/freyawatkins/block_rotation)
+![](images/paste-59797BE7.png) open materials: [gitlab.pavlovia.org/freyawatkins/block_rotation](https://gitlab.pavlovia.org/freyawatkins/block_rotation)
 
 ![](images/sameExample.gif){width="250"} ![](images/mirrorsExample.gif){width="250"} ![](images/same-2.gif){width="250"} ![](images/mirror-2.gif){width="250"}
 
