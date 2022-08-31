@@ -1,5 +1,5 @@
 ---
-title: "Code examples"
+title: "Example coding projects"
 author: "Freya Watkins"
 format: revealjs
 editor: visual
@@ -25,11 +25,10 @@ editor: visual
 
 ![](images/paste-2B249F3D.png) ![](images/ALARM%2090L%20gif.gif){width="200"}![](images/ALARM_45L%20gif.gif){width="200"}![](images/ALARM_0%20gif.gif){width="200"}![](images/ALARM%2045R%20gif.gif){width="200"}![](images/ALARM%2090R%20gif.gif){width="200"}
 
-## Online Research: PsychoPy/PsychoJS
+## Online research: PsychoPy/PsychoJS
+![](images/paste-E1A5144A.png){width="250"} ![](images/paste-388CF918.png){width="675"}
 
-![](images/paste-E1A5144A.png){width="300"} ![](images/paste-388CF918.png){width="725"}
-
-![](images/paste-6A927C8D.png){width="800"}
+![](images/paste-6A927C8D.png){fig-align="center"}
 
 ## Block rotation experiment
 
@@ -47,7 +46,7 @@ editor: visual
 
 ![](images/paste-0051425B.png){fig-align="center"}
 
-## Self-taught dataviz - TidyTuesday
+## Self-taught dataviz - #TidyTuesday
 
 ![](images/taylor_bigrams.png){fig-align="center"}
 
@@ -61,7 +60,7 @@ editor: visual
 ## Other coding projects/work
 
 -   [my personal website](https://freyawatkins.github.io) using R-Markdown/GitHub repo/HTML
--   teaching: R-Ladies invited [talk](https://www.youtube.com/watch?v=RD_ZR4Ulzec) on version control ([slides](https://freyawatkins.github.io/r-ladies-cov_github))
--   1 on 1 tutoring: dataviz in R and version control with PhD students/academics
+-   teaching: R-Ladies invited [talk](https://www.youtube.com/watch?v=RD_ZR4Ulzec) on version control ([slides](https://freyawatkins.github.io/r-ladies-cov_github)), PsychoPy etc.
+-   1 on 1 tutoring: dataviz in R & version control with PhD students/academics
 -   nominated to curate for [`@WeAreRLadies`](https://twitter.com/WeAreRLadies) in the autumn
--   for these presentation slides I tried out Quarto/RevealJS
+-   for [these presentation slides](https://freyawatkins.github.io/odsc-pres/code-examples) I tried out Quarto/RevealJS
