@@ -8,14 +8,12 @@ output:
 
 I'm a [PhD student](https://www.birmingham.ac.uk/schools/psychology/people/dr-students/watkins-freya.aspx) in psycholinguistics at the [University of Birmingham](http://www.birmingham.ac.uk/index.aspx), based in the [School of Psychology](https://www.birmingham.ac.uk/schools/psychology/index.aspx).
 
-I am supervised by [Dr Robin Thompson](https://www.birmingham.ac.uk/schools/psychology/people/profile.aspx?ReferenceId=71086) in the [Multimodal Multilingual Language Processing Lab](https://m2l2lab.com)<br/>
-& [Dr Bodo Winter](https://www.bodowinter.com) in the [Department of English Language and Linguistics](https://www.birmingham.ac.uk/schools/edacs/departments/englishlanguage/index.aspx).
+I am supervised by [Dr Robin Thompson](https://www.birmingham.ac.uk/schools/psychology/people/profile.aspx?ReferenceId=71086) in the [Multimodal Multilingual Language Processing Lab](https://m2l2lab.com)<br/> & [Dr Bodo Winter](https://www.bodowinter.com) in the [Department of English Language and Linguistics](https://www.birmingham.ac.uk/schools/edacs/departments/englishlanguage/index.aspx).
 
-My postgraduate study is funded by a 1+3 studentship from the [Economic and Social Research Council](https://esrc.ukri.org/).  
+My postgraduate study is funded by a 1+3 studentship from the [Economic and Social Research Council](https://esrc.ukri.org/).
 
 !["Headshot of Freya looking into the camera. She has wavy brown shoulder-length hair, a black top and sunglasses on her head"](images/fw.jpg)
 
+This website was created in RStudio and GitHub following a [psyTeachR](https://psyteachr.github.io/index.html) [tutorial](https://debruine.github.io/tutorials/webpages.html) created by [Lisa DeBruine](https://debruine.github.io/).
 
-This website was created in RStudio and GitHub following a [psyTeachR](https://psyteachr.github.io/index.html) [tutorial](https://debruine.github.io/tutorials/webpages.html) created by [Lisa DeBruine](https://debruine.github.io/). 
-
-Find me on [Mastodon](<a rel="me" href="https://tech.lgbt/@freya">Mastodon</a>) & [GitHub](https://github.com/freyawatkins/). 
+Find me on <a rel="me" href="https://tech.lgbt/@freya">Mastodon</a> & [GitHub](https://github.com/freyawatkins/)!
